@@ -18,9 +18,13 @@ export const MAPA_VERIFICADO_URL =
   "https://www.google.com/maps/d/u/0/viewer?mid=19VCxfF0ihITJC8BIB3dZeBMHDQaliY4";
 
 /** When this snapshot was taken. */
-export const MAPA_VERIFICADO_SYNC = "2026-08-10T21:09:53.086Z";
+export const MAPA_VERIFICADO_SYNC = "2026-08-10T21:42:09.382Z";
 
-export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
+/**
+ * Pins transcribed from the source map. Hand-curated additions live in
+ * `mapa-verificado.local.ts` so this file can be overwritten freely.
+ */
+export const PUNTOS_SINCRONIZADOS: PuntoVerificado[] = [
   {
     id: "peligro-huv-cali",
     layer: "peligro",
@@ -31,6 +35,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "gerente Irne Torres Castro, 10 ago.",
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.544854, 3.430031],
@@ -46,6 +51,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "El País, 10 ago.",
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.543503, 3.392702],
@@ -61,6 +67,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "El País, 10 ago.",
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.535953, 3.434606],
@@ -76,6 +83,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "El Colombiano, 10 ago.",
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.532228, 3.456995],
@@ -91,6 +99,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "Gobernación del Chocó, 2° reporte 10:43 a.m.",
     approx: true,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.6527, 5.6947],
@@ -106,6 +115,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "El País / 90 Minutos, 10 ago.",
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-75.517161, 5.067422],
@@ -121,6 +131,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "alcalde Jorge E. Rojas, 10 ago.",
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-75.5175, 5.0689],
@@ -136,6 +147,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "El Tiempo, 10 ago.",
     approx: true,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-77.08042, 3.889077],
@@ -151,6 +163,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "El Colombiano / concesión, 10 ago.",
     approx: true,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.664665, 3.762014],
@@ -166,6 +179,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "El Colombiano, 10 ago.",
     approx: true,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-75.289975, 5.070621],
@@ -181,6 +195,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "SGC, 10 ago.",
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.22922, 4.97262],
@@ -196,6 +211,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "Noticias Caracol / Portafolio, 10 ago.",
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-75.7395, 4.8127],
@@ -211,6 +227,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "El País, 10 ago 5:25 p.m.",
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.534835, 3.455031],
@@ -226,6 +243,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "Alcaldía de Barranquilla / El Tiempo, 10 ago 12:25 p.m.",
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-74.769824, 10.982016],
@@ -241,6 +259,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "El Colombiano, 10 ago.",
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-75.576721, 6.233699],
@@ -256,6 +275,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "El Colombiano, 10 ago.",
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-75.57672, 6.228658],
@@ -271,6 +291,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "90 Minutos, 10 ago.",
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.544438, 3.431156],
@@ -286,6 +307,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.527784, 3.454888],
@@ -301,6 +323,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.52191, 3.469731],
@@ -316,6 +339,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-75.698811, 4.818016],
@@ -331,6 +355,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-75.529902, 5.05741],
@@ -346,6 +371,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.660948, 5.695485],
@@ -361,6 +387,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.645818, 5.683494],
@@ -376,6 +403,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: true,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-74.0721, 4.6097],
@@ -391,6 +419,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "alcalde C.F. Galán, 10 ago.",
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-74.151048, 4.701841],
@@ -406,6 +435,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.544854, 3.430031],
@@ -421,6 +451,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.543503, 3.392702],
@@ -436,6 +467,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.535953, 3.434606],
@@ -451,6 +483,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: true,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.6527, 5.6947],
@@ -466,6 +499,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-75.6961, 4.8133],
@@ -481,6 +515,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: false,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-75.5174, 5.0687],
@@ -496,6 +531,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: true,
     estado: null,
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-74.1096, 4.6482],
@@ -511,6 +547,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: "Autopistas Urabá, 10 ago.",
     approx: false,
     estado: "abierta",
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.1741, 6.8986],
@@ -526,6 +563,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: false,
     estado: "cerrada",
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-76.664665, 3.762014],
@@ -541,6 +579,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: false,
     estado: "cerrada",
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-75.289975, 5.070621],
@@ -556,6 +595,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: false,
     estado: "cerrada",
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-75.5175, 5.0689],
@@ -571,6 +611,7 @@ export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
     source: null,
     approx: true,
     estado: "cerrada",
+    origen: "mymaps",
     geometry: {
       type: "Point",
       coordinates: [-75.7395, 4.8127],
