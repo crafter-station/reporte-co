@@ -104,8 +104,11 @@ Generate secrets with `openssl rand -hex 32` for `REPORTER_HASH_SECRET` and
 | ------------------------ | ------------------------------------------- |
 | `/`                      | Public real-time map of verified reports    |
 | `/reportar`              | Anonymous web report form                   |
+| `/ayudar`                | Volunteer sign-up ("quiero ayudar")         |
+| `/ayudar/necesidades`    | Published needs as a triage list            |
 | `/moderation`            | Volunteer moderation queue (password-gated) |
 | `/api/reports`           | `GET` PII-free feed · `POST` web submission |
+| `/api/volunteers`        | `POST` volunteer sign-up (no public `GET`)  |
 | `/api/webhooks/whatsapp` | Kapso/WhatsApp inbound webhook (signed)     |
 
 ### WhatsApp setup (Kapso)
@@ -123,11 +126,27 @@ Without WhatsApp configured, the web form path works end-to-end on its own.
 
 MVP foundation. Working: WhatsApp + web ingest, moderation queue with N-of-M
 verification, PII scrubbing + coarsened geo, real-time public map with the
-epicenter marked.
+epicenter marked, and volunteer sign-up with a triage list of published needs.
 
 Next up: Supabase Auth for per-volunteer accounts (replacing the shared-password
-gate), a municipio/barrio gazetteer for sharper-but-safe geolocation, duplicate
-clustering, feeds for UNGRD and relief NGOs (CSV/RSS), and Telegram intake.
+gate), assignments so a moderator can hand a case to one volunteer and reveal
+the exact address only to them, a municipio/barrio gazetteer for
+sharper-but-safe geolocation, duplicate clustering, feeds for UNGRD and relief
+NGOs (CSV/RSS), and Telegram intake.
+
+### The volunteer side
+
+`/ayudar` collects what someone can offer (capabilities drawn from the same
+taxonomy as reports, plus departamento/municipio and how many cases they can
+take at once). Two privacy notes:
+
+- The volunteer's raw contact is stored **only** on explicit opt-in, and lives
+  on the internal side alongside `rawText` and precise coordinates: no endpoint
+  returns it, it never goes over Realtime, and `volunteers` has no public read
+  path. A salted, domain-separated hash is always stored so a repeat sign-up
+  updates the existing row instead of creating a second one.
+- `/ayudar/necesidades` calls `getPublicReports()`, the same query behind the
+  map, so it can only ever show data that is already public.
 
 ## Credits & sources
 

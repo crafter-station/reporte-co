@@ -109,6 +109,43 @@ export type Status = (typeof STATUSES)[number];
 export const SOURCES = ["whatsapp", "telegram", "web"] as const;
 export type Source = (typeof SOURCES)[number];
 
+// ── Volunteers ────────────────────────────────────────────────────────────
+// The other half of the pipeline: people offering capacity rather than
+// reporting a need. A volunteer's `capabilities` reuse CATEGORIES above (plus
+// free-text labels, exactly like reports.categories) so an offer and a need can
+// be matched on the same vocabulary.
+
+/** How a volunteer asked to be reached. The value itself is opt-in — see schema. */
+export const CONTACT_CHANNELS = ["whatsapp", "email"] as const;
+export type ContactChannel = (typeof CONTACT_CHANNELS)[number];
+
+export const CONTACT_CHANNEL_LABELS: Record<ContactChannel, string> = {
+  whatsapp: "WhatsApp",
+  email: "Correo",
+};
+
+// pending → signed up, not yet reviewed by a moderator
+// active  → cleared to receive assignments
+// paused  → temporarily unavailable (travel, already at capacity elsewhere)
+// blocked → spam / removed
+export const VOLUNTEER_STATUSES = [
+  "pending",
+  "active",
+  "paused",
+  "blocked",
+] as const;
+export type VolunteerStatus = (typeof VOLUNTEER_STATUSES)[number];
+
+export const VOLUNTEER_STATUS_LABELS: Record<VolunteerStatus, string> = {
+  pending: "Pendiente",
+  active: "Activo",
+  paused: "En pausa",
+  blocked: "Bloqueado",
+};
+
+/** Upper bound on concurrent cases a volunteer can declare. */
+export const MAX_VOLUNTEER_CAPACITY = 10;
+
 // ── Colombia first-level divisions (32 departamentos + Bogotá D.C.) ────────
 // Approximate capital/centroid coords used to default the map view and to
 // snap public pins to a coarse location when a precise one isn't safe to show.
