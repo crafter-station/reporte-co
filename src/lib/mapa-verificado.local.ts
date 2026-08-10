@@ -113,6 +113,40 @@ export const PUNTOS_LOCALES: PuntoVerificado[] = [
     [-74.084058, 4.655319],
     false,
   ),
+  {
+    id: "ayuda-acopio-armenia-banco-alimentos",
+    layer: "ayuda",
+    emoji: "📦",
+    title: "ACOPIO ARMENIA — Banco de Alimentos Monseñor Roberto López Londoño",
+    short: "ACOPIO ARMENIA",
+    body: "Centro de acopio habilitado. Dirección: Calle 21 #12-08, Armenia. Dona solo artículos en buen estado y sigue las indicaciones del centro.",
+    source:
+      "Pieza informativa «Centros de acopio habilitados por ciudad», 10 ago. Dirección corroborada por Caracol Radio.",
+    approx: true,
+    estado: null,
+    origen: "mymaps",
+    geometry: {
+      type: "Point",
+      coordinates: [-75.672708, 4.531523],
+    },
+  },
+  {
+    id: "ayuda-acopio-manizales-banco-alimentos",
+    layer: "ayuda",
+    emoji: "📦",
+    title: "ACOPIO MANIZALES — Banco Arquidiocesano de Alimentos",
+    short: "ACOPIO MANIZALES",
+    body: "Centro de acopio habilitado. Dirección: Calle 49 #27A-85, Manizales. Dona solo artículos en buen estado y sigue las indicaciones del centro.",
+    source:
+      "Pieza informativa «Centros de acopio habilitados por ciudad», 10 ago. Dirección corroborada por el Banco Arquidiocesano de Alimentos de Manizales.",
+    approx: true,
+    estado: null,
+    origen: "mymaps",
+    geometry: {
+      type: "Point",
+      coordinates: [-75.500787, 5.060916],
+    },
+  },
 ];
 
 /**
