@@ -137,15 +137,34 @@ function popupHtml(props: Record<string, string>): string {
     ${props.loc ? `<div class="mc-pop-loc">${escapeHtml(props.loc)}</div>` : ""}`;
 }
 
+/** A named place the map can jump to: the epicenter, or a shared city view. */
+export type MapView = {
+  label: string;
+  lat: number;
+  lng: number;
+  zoom: number;
+};
+
 export function ReportMap({
   initialReports,
+  view,
 }: {
   initialReports: PublicReport[];
+  /**
+   * Opening view. When a city permalink supplies one we also stop auto-flying
+   * to the visitor's own location, so a link shared as "the map for Pereira"
+   * still shows Pereira to someone reading it from Bogotá.
+   */
+  view?: MapView;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const loadedRef = useRef(false);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  // Read once at init; changing the prop later should not re-create the map.
+  const viewRef = useRef<MapView>(
+    view ?? { label: "Zona afectada", ...ZONA_AFECTADA },
+  );
   const [active, setActive] = useState<Set<Category>>(new Set(CATEGORIES));
   const [reports, setReports] = useState<PublicReport[]>(initialReports);
   // Prompt for the visitor's location as soon as the map loads.
@@ -181,8 +200,8 @@ export function ReportMap({
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: DEFAULT_STYLE,
-      center: [ZONA_AFECTADA.lng, ZONA_AFECTADA.lat],
-      zoom: ZONA_AFECTADA.zoom,
+      center: [viewRef.current.lng, viewRef.current.lat],
+      zoom: viewRef.current.zoom,
       maxBounds: COLOMBIA_BOUNDS,
       minZoom: MAP_MIN_ZOOM,
       maxZoom: MAP_MAX_ZOOM,
@@ -430,12 +449,15 @@ export function ReportMap({
           .setLngLat(lngLat)
           .addTo(map);
       }
+      // A city permalink was shared for that city: keep its framing, just show
+      // the visitor where they are within it.
+      if (view) return;
       map.flyTo({ center: lngLat, zoom: 12, duration: 1500, essential: true });
     };
 
     if (loadedRef.current) place();
     else map.once("load", place);
-  }, [userCoords]);
+  }, [userCoords, view]);
 
   function toggle(cat: Category) {
     setActive((prev) => {
@@ -446,14 +468,16 @@ export function ReportMap({
     });
   }
 
-  const focusEpicentro = useCallback(() => {
+  // On a city permalink this returns to that city; otherwise, to the epicenter.
+  const quickView: MapView = view ?? { ...EPICENTRO, label: "Epicentro" };
+  const focusQuickView = useCallback(() => {
     mapRef.current?.flyTo({
-      center: [EPICENTRO.lng, EPICENTRO.lat],
-      zoom: EPICENTRO.zoom,
+      center: [quickView.lng, quickView.lat],
+      zoom: quickView.zoom,
       duration: 1200,
       essential: true,
     });
-  }, []);
+  }, [quickView]);
 
   const focusCountry = useCallback(() => {
     mapRef.current?.fitBounds(COLOMBIA_BOUNDS, {
@@ -509,11 +533,11 @@ export function ReportMap({
         <div className="grid grid-cols-2 gap-px border-t border-border bg-border">
           <button
             type="button"
-            onClick={focusEpicentro}
+            onClick={focusQuickView}
             className="flex items-center justify-center gap-1.5 bg-card px-2 py-2 text-[11px] text-foreground transition-colors hover:bg-accent"
           >
             <Crosshair className="size-3" />
-            Epicentro
+            {quickView.label}
           </button>
           <button
             type="button"
