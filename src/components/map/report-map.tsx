@@ -226,8 +226,14 @@ function verifiedPopupHtml(features: Record<string, string>[]): string {
       const capa = isCapa(p.layer) ? p.layer : null;
       const label = capa ? CAPA_LABELS[capa] : p.layer;
       const estado = p.estado ? ` · ${p.estado.toUpperCase()}` : "";
+      // Published by an authority, not transcribed by a volunteer — worth
+      // saying, since the layer's blanket caveat doesn't apply to these.
+      const oficial =
+        p.origen === "oficial"
+          ? `<span class="mc-pop-oficial">Oficial</span>`
+          : "";
       const approx = p.approx
-        ? `<div class="mc-pop-approx">Ubicación aproximada — confirme antes de desplazarse.</div>`
+        ? `<div class="mc-pop-approx">Ubicación aproximada — guíese por la dirección y confirme antes de desplazarse.</div>`
         : "";
       const source = p.source
         ? `<div class="mc-pop-loc">Fuente: ${escapeHtml(p.source)}</div>`
@@ -238,6 +244,7 @@ function verifiedPopupHtml(features: Record<string, string>[]): string {
             <span class="mc-pop-chip">
               <span class="mc-pop-dot" style="background:${p.color}"></span>${escapeHtml(label)}
             </span>
+            ${oficial}
             <span class="mc-pop-sev">${escapeHtml(estado)}</span>
           </div>
           <div class="mc-pop-body">
@@ -862,8 +869,8 @@ export function ReportMap({
             className="underline underline-offset-2 hover:text-foreground"
           >
             {MAPA_VERIFICADO_NOMBRE}
-          </a>
-          . No es fuente oficial: emergencias, 123.
+          </a>{" "}
+          y boletines oficiales. Cada ficha indica su fuente. Emergencias, 123.
         </p>
         {/* Quick views */}
         <div className="grid grid-cols-2 gap-px border-t border-border bg-border">
