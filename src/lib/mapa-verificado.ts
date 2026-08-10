@@ -20,8 +20,9 @@
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import {
   MAPA_VERIFICADO_URL,
-  PUNTOS_VERIFICADOS,
+  PUNTOS_SINCRONIZADOS,
 } from "./mapa-verificado.data";
+import { PUNTOS_LOCALES } from "./mapa-verificado.local";
 
 // ── Layers ────────────────────────────────────────────────────────────────
 export const CAPAS_VERIFICADAS = [
@@ -54,6 +55,15 @@ export const CAPA_META: Record<CapaVerificada, { color: string }> = {
 /** A closed corridor reads as danger, not as a corridor. */
 const CERRADA_COLOR = CAPA_META.peligro.color;
 
+/**
+ * Where a pin came from. Both kinds are curated rather than reported, but they
+ * don't carry the same weight: `mymaps` is a volunteer's transcription of a
+ * bulletin, `oficial` is published directly by an authority (an alcaldía, the
+ * Cruz Roja). The map says which, because "no es fuente oficial" is true of the
+ * first and would be a lie about the second.
+ */
+export type OrigenVerificado = "mymaps" | "oficial";
+
 export type PuntoVerificado = {
   id: string;
   layer: CapaVerificada;
@@ -71,10 +81,21 @@ export type PuntoVerificado = {
   approx: boolean;
   /** Corridor state; null on every other layer. */
   estado: "abierta" | "cerrada" | null;
+  origen: OrigenVerificado;
   geometry: Geometry;
 };
 
-export { MAPA_VERIFICADO_URL, PUNTOS_VERIFICADOS };
+/**
+ * Every reference pin: the My Maps snapshot plus the hand-curated additions.
+ * They're kept in separate modules so `bun run map:sync` can overwrite the
+ * former without touching the latter.
+ */
+export const PUNTOS_VERIFICADOS: PuntoVerificado[] = [
+  ...PUNTOS_SINCRONIZADOS,
+  ...PUNTOS_LOCALES,
+];
+
+export { MAPA_VERIFICADO_URL };
 export {
   MAPA_VERIFICADO_AVISO,
   MAPA_VERIFICADO_NOMBRE,
@@ -133,6 +154,7 @@ export function verificadosFeatureCollection(): FeatureCollection<
           source: p.source ?? "",
           approx: p.approx ? "1" : "",
           estado: p.estado ?? "",
+          origen: p.origen,
           color,
           icon: verificadoIconId(color),
         },
