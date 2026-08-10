@@ -196,3 +196,131 @@ export function departamentoCentroid(
   const match = DEPARTAMENTOS.find((d) => d.name === name);
   return match ? { lat: match.lat, lng: match.lng } : null;
 }
+
+// ── Shareable city views ──────────────────────────────────────────────────
+/**
+ * Each affected city gets its own permalink (`/pereira`, `/manizales`, …) that
+ * opens the map already framed on it. A local outlet or account sharing "the
+ * map for my city" travels much further than a generic national link, and the
+ * person who taps it sees their own streets first.
+ */
+export const CIUDADES = [
+  {
+    slug: "pereira",
+    name: "Pereira",
+    departamento: "Risaralda",
+    lat: 4.8133,
+    lng: -75.6961,
+    zoom: 12,
+  },
+  {
+    slug: "dosquebradas",
+    name: "Dosquebradas",
+    departamento: "Risaralda",
+    lat: 4.835,
+    lng: -75.674,
+    zoom: 12.4,
+  },
+  {
+    slug: "manizales",
+    name: "Manizales",
+    departamento: "Caldas",
+    lat: 5.0689,
+    lng: -75.5174,
+    zoom: 12.2,
+  },
+  {
+    slug: "armenia",
+    name: "Armenia",
+    departamento: "Quindío",
+    lat: 4.5339,
+    lng: -75.6811,
+    zoom: 12.2,
+  },
+  {
+    slug: "cali",
+    name: "Cali",
+    departamento: "Valle del Cauca",
+    lat: 3.4516,
+    lng: -76.532,
+    zoom: 11.4,
+  },
+  {
+    slug: "palmira",
+    name: "Palmira",
+    departamento: "Valle del Cauca",
+    lat: 3.5394,
+    lng: -76.3036,
+    zoom: 12.2,
+  },
+  {
+    slug: "tulua",
+    name: "Tuluá",
+    departamento: "Valle del Cauca",
+    lat: 4.0847,
+    lng: -76.1954,
+    zoom: 12.4,
+  },
+  {
+    slug: "cartago",
+    name: "Cartago",
+    departamento: "Valle del Cauca",
+    lat: 4.7469,
+    lng: -75.9116,
+    zoom: 12.4,
+  },
+  {
+    slug: "buenaventura",
+    name: "Buenaventura",
+    departamento: "Valle del Cauca",
+    lat: 3.8801,
+    lng: -77.0312,
+    zoom: 12,
+  },
+  {
+    slug: "quibdo",
+    name: "Quibdó",
+    departamento: "Chocó",
+    lat: 5.6947,
+    lng: -76.6611,
+    zoom: 12.4,
+  },
+  {
+    slug: "san-jose-del-palmar",
+    name: "San José del Palmar",
+    departamento: "Chocó",
+    lat: 4.8965,
+    lng: -76.2286,
+    zoom: 11.5,
+  },
+  {
+    slug: "ibague",
+    name: "Ibagué",
+    departamento: "Tolima",
+    lat: 4.4389,
+    lng: -75.2322,
+    zoom: 12,
+  },
+  {
+    slug: "medellin",
+    name: "Medellín",
+    departamento: "Antioquia",
+    lat: 6.2442,
+    lng: -75.5812,
+    zoom: 11.6,
+  },
+  {
+    slug: "bogota",
+    name: "Bogotá",
+    departamento: "Bogotá D.C.",
+    lat: 4.711,
+    lng: -74.0721,
+    zoom: 11,
+  },
+] as const;
+
+export type Ciudad = (typeof CIUDADES)[number];
+
+export function findCiudad(slug: string): Ciudad | null {
+  return CIUDADES.find((c) => c.slug === slug) ?? null;
+}
