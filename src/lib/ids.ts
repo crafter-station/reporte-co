@@ -6,9 +6,9 @@ const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 
 const nano = customAlphabet(alphabet, 8);
 
-/** Public ticket id for a report, e.g. "VE-7K2P9QXM". */
+/** Public ticket id for a report, e.g. "CO-7K2P9QXM". */
 export function reportId(): string {
-  return `VE-${nano()}`;
+  return `CO-${nano()}`;
 }
 
 const nanoLong = customAlphabet(`${alphabet.toLowerCase()}0123456789`, 16);
