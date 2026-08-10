@@ -192,6 +192,7 @@ type Entry = {
   source: string | null;
   approx: boolean;
   estado: "abierta" | "cerrada" | null;
+  origen: "mymaps";
   geometry:
     | { type: "Point"; coordinates: Coord }
     | { type: "LineString"; coordinates: Coord[] };
@@ -256,6 +257,7 @@ for (const folder of tagContent(doc, "Folder")) {
       source,
       approx: isApproximate(desc) || isApproximate(title),
       estado: estado(layer, title, emoji),
+      origen: "mymaps",
       geometry: line
         ? { type: "LineString", coordinates: coords }
         : { type: "Point", coordinates: coords[0] },
@@ -286,7 +288,11 @@ export const MAPA_VERIFICADO_URL = ${JSON.stringify(VIEWER_URL)};
 /** When this snapshot was taken. */
 export const MAPA_VERIFICADO_SYNC = ${JSON.stringify(new Date().toISOString())};
 
-export const PUNTOS_VERIFICADOS: PuntoVerificado[] = ${JSON.stringify(entries, null, 2)};
+/**
+ * Pins transcribed from the source map. Hand-curated additions live in
+ * \`mapa-verificado.local.ts\` so this file can be overwritten freely.
+ */
+export const PUNTOS_SINCRONIZADOS: PuntoVerificado[] = ${JSON.stringify(entries, null, 2)};
 `;
 
 await writeFile(OUT, file);
