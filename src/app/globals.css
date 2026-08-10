@@ -314,6 +314,14 @@ a,
   line-height: 1.35;
   color: #fbbf24;
 }
+.mc-pop-oficial {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 1px 5px;
+  border: 1px solid currentColor;
+  color: #34d399;
+}
 .mc-pop-tel {
   color: inherit;
   text-decoration: underline;
