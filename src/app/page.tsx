@@ -1,4 +1,4 @@
-import { Megaphone } from "lucide-react";
+import { HeartHandshake, Megaphone } from "lucide-react";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { GithubBadge } from "@/components/github-badge";
@@ -37,6 +37,30 @@ export default async function Home() {
             <Link href="/moderation">Consola</Link>
           </Button>
           <QrShare />
+          {/* Icon-only on phones: the header is already tight there, and a
+              fourth labelled button pushes "Reportar" off-screen. */}
+          <Button
+            asChild
+            size="icon"
+            variant="outline"
+            className="sm:hidden"
+            aria-label="Quiero ayudar"
+          >
+            <Link href="/ayudar">
+              <HeartHandshake className="size-4" />
+            </Link>
+          </Button>
+          <Button
+            asChild
+            size="default"
+            variant="outline"
+            className="hidden font-medium sm:inline-flex"
+          >
+            <Link href="/ayudar">
+              <HeartHandshake className="size-4" />
+              Quiero ayudar
+            </Link>
+          </Button>
           <Button asChild size="default" className="font-semibold shadow-sm">
             <Link href="/reportar">
               <Megaphone className="size-4" />

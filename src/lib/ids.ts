@@ -11,6 +11,11 @@ export function reportId(): string {
   return `CO-${nano()}`;
 }
 
+/** Public folio for a volunteer sign-up, e.g. "VOL-4H8TNQ2X". */
+export function volunteerId(): string {
+  return `VOL-${nano()}`;
+}
+
 const nanoLong = customAlphabet(`${alphabet.toLowerCase()}0123456789`, 16);
 
 /** Opaque id for audit-log rows. */

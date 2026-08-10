@@ -20,6 +20,24 @@ export function hashReporter(phone: string): string {
     .slice(0, 32);
 }
 
+/**
+ * One-way hash of a volunteer's contact (phone or email). Domain-separated from
+ * hashReporter() with a `volunteer:` prefix, so the same person signing up to
+ * help and reporting a need does NOT produce the same digest — the two
+ * populations can never be correlated through the database.
+ *
+ * Unlike a reporter, a volunteer may also opt in to storing the raw value (see
+ * `volunteers.contact`). This hash is stored either way: it is what makes
+ * re-registration idempotent without depending on the raw value.
+ */
+export function hashVolunteerContact(contact: string): string {
+  const normalized = contact.trim().toLowerCase().replace(/\s+/g, "");
+  return createHmac("sha256", env.REPORTER_HASH_SECRET)
+    .update(`volunteer:${normalized}`)
+    .digest("hex")
+    .slice(0, 32);
+}
+
 // Patterns that should never reach a public surface.
 const PHONE_RE = /(\+?\d[\d\s().-]{6,}\d)/g;
 const EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]+/g;

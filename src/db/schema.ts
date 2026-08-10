@@ -2,12 +2,21 @@ import { sql } from "drizzle-orm";
 import {
   doublePrecision,
   index,
+  integer,
   jsonb,
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
-import type { Category, Severity, Source, Status } from "@/lib/taxonomy";
+import type {
+  Category,
+  ContactChannel,
+  Severity,
+  Source,
+  Status,
+  VolunteerStatus,
+} from "@/lib/taxonomy";
 
 /**
  * reports — every inbound signal becomes one row.
@@ -112,10 +121,88 @@ export const auditLog = pgTable(
   ],
 );
 
+/**
+ * volunteers — the other side of the pipeline: people offering capacity.
+ *
+ * Same privacy tiering as `reports`: sensitive values may live here, but they
+ * never reach a public surface.
+ *   • RLS is enabled with NO policies, so the table is deny-by-default. This
+ *     matters on Supabase specifically: PostgREST auto-exposes every table in
+ *     the `public` schema, and the anon key ships in the browser bundle — so
+ *     without RLS this table would be readable at /rest/v1/volunteers by
+ *     anyone who opened devtools. The app is unaffected: it connects as the
+ *     table owner over DATABASE_URL, which bypasses RLS.
+ *   • There is NO public read path to this table. Volunteers are never listed
+ *     publicly and no volunteer field is ever broadcast over Realtime.
+ *   • contactHash is always stored (dedupe), domain-separated from reporter
+ *     hashes. The raw `contact` is stored ONLY on explicit opt-in: unlike a
+ *     reporter, whose number arrives embedded in a WhatsApp message, a
+ *     volunteer signs up precisely in order to be contacted.
+ *   • Free text (displayName, notes) is scrubbed with scrubPII() on write.
+ *   • Geography is coarse by construction — departamento/municipio, never
+ *     coordinates. A volunteer's home is as sensitive as a reporter's.
+ */
+export const volunteers = pgTable(
+  "volunteers",
+  {
+    // Short id doubles as the human-facing folio, e.g. "VOL-4H8TNQ2X".
+    id: text("id").primaryKey(),
+
+    // ── Identity ──
+    // Salted hash of the volunteer's phone/email. Always present — this is what
+    // makes re-registration idempotent, with no dependency on the raw value.
+    contactHash: text("contact_hash").notNull(),
+    contactChannel: text("contact_channel").$type<ContactChannel>().notNull(),
+    // The raw contact, stored ONLY when the volunteer opts in to being reached.
+    // Internal-only, same tier as reports.rawText and the precise coordinates:
+    // no endpoint returns it, it never goes over Realtime, and it never renders
+    // on a public surface.
+    contact: text("contact"),
+    // When that consent was given. Null means no consent on file, so nothing may
+    // contact this person. Clearing `contact` revokes it.
+    contactConsentAt: timestamp("contact_consent_at", { withTimezone: true }),
+    // Optional alias. Scrubbed on write; a real name is never required.
+    displayName: text("display_name"),
+
+    // ── The offer ──
+    // Needs this person can cover. Mirrors reports.categories: taxonomy values
+    // plus free-text labels, so an offer and a need share one vocabulary.
+    capabilities: jsonb("capabilities").$type<string[]>().notNull().default([]),
+    departamento: text("departamento"),
+    municipio: text("municipio"),
+    // How many cases this person can hold at once. Inert until assignments
+    // land; collected here because it is part of the offer.
+    capacity: integer("capacity").notNull().default(1),
+    // Free-text detail (vehicle, schedule, certifications). Scrubbed on write.
+    notes: text("notes"),
+
+    // Signing up grants nothing: a moderator moves a volunteer to `active`.
+    status: text("status")
+      .$type<VolunteerStatus>()
+      .notNull()
+      .default("pending"),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    // One row per person — makes re-registration idempotent, like sourceRef.
+    uniqueIndex("volunteers_contact_hash_idx").on(t.contactHash),
+    index("volunteers_status_idx").on(t.status),
+    index("volunteers_departamento_idx").on(t.departamento),
+  ],
+).enableRLS();
+
 export type Report = typeof reports.$inferSelect;
 export type NewReport = typeof reports.$inferInsert;
 export type AuditEntry = typeof auditLog.$inferSelect;
 export type NewAuditEntry = typeof auditLog.$inferInsert;
+export type Volunteer = typeof volunteers.$inferSelect;
+export type NewVolunteer = typeof volunteers.$inferInsert;
 
 /** Columns safe to expose to the public map — no PII, coarsened geo only. */
 export const PUBLIC_REPORT_COLUMNS = {
