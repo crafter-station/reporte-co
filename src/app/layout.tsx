@@ -29,13 +29,11 @@ export const metadata: Metadata = {
     siteName: "Reporte CO",
     locale: "es_CO",
     type: "website",
-    images: [{ url: "/og.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Reporte CO",
     description: DESCRIPTION,
-    images: ["/og-twitter.png"],
   },
 };
 
