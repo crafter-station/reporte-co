@@ -3,10 +3,22 @@
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { FeatureCollection, Feature as GeoFeature, Point } from "geojson";
 import { Crosshair } from "lucide-react";
-import mapboxgl from "mapbox-gl";
+import mapboxgl, { type FilterSpecification } from "mapbox-gl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PublicReport } from "@/db/schema";
 import { env } from "@/env";
+import {
+  CAPA_LABELS,
+  CAPA_META,
+  CAPAS_VERIFICADAS,
+  type CapaVerificada,
+  capaCounts,
+  MAPA_VERIFICADO_NOMBRE,
+  MAPA_VERIFICADO_URL,
+  verificadoColors,
+  verificadoIconId,
+  verificadosFeatureCollection,
+} from "@/lib/mapa-verificado";
 import { PUBLIC_REPORTS_CHANNEL, type ReportEvent } from "@/lib/realtime";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -35,6 +47,9 @@ const DEFAULT_STYLE =
 
 const SOURCE_ID = "reports";
 const EPICENTER_SOURCE_ID = "epicenter";
+const VERIFIED_SOURCE_ID = "verified";
+const VERIFIED_POINTS_LAYER = "verified-points";
+const VERIFIED_LINES_LAYER = "verified-lines";
 
 function escapeHtml(s: string): string {
   return s.replace(
@@ -137,6 +152,109 @@ function popupHtml(props: Record<string, string>): string {
     ${props.loc ? `<div class="mc-pop-loc">${escapeHtml(props.loc)}</div>` : ""}`;
 }
 
+// ── Reference layer (curated My Maps pins) ────────────────────────────────
+
+/** Logical size of a reference marker, in CSS pixels. */
+const VERIFIED_ICON_PX = 12;
+
+// Static snapshot — built once per module, never refetched at runtime.
+const VERIFIED_DATA = verificadosFeatureCollection();
+const VERIFIED_COLORS = verificadoColors();
+const VERIFIED_COUNTS = capaCounts();
+const VERIFIED_TOTAL = Object.values(VERIFIED_COUNTS).reduce(
+  (a, b) => a + b,
+  0,
+);
+
+/**
+ * Reference pins are drawn as squares so a glance separates them from the round
+ * report dots: a red circle is "someone reported this", a red square is "the
+ * curators copied this out of an official bulletin". Same map, two pipelines,
+ * and the difference matters before you act on either.
+ */
+function squareIcon(color: string, ratio: number): ImageData | null {
+  const px = Math.round(VERIFIED_ICON_PX * ratio);
+  const canvas = document.createElement("canvas");
+  canvas.width = px;
+  canvas.height = px;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  const border = Math.max(1, Math.round(1.5 * ratio));
+  ctx.fillStyle = "rgba(255,255,255,0.92)";
+  ctx.fillRect(0, 0, px, px);
+  ctx.fillStyle = color;
+  ctx.fillRect(border, border, px - border * 2, px - border * 2);
+  return ctx.getImageData(0, 0, px, px);
+}
+
+/**
+ * Colombian landline/mobile numbers, as the curators write them: "313 753 08
+ * 68", "(604) 448 3888", "310 415 7033". Short emergency codes (123, #767) are
+ * left alone — three loose digits match far too much prose to be worth it.
+ */
+const PHONE_RE =
+  /(?:\+?\d{1,3}\s?)?(?:\(\d{3}\)|\d{3})[\s.-]?\d{3}[\s.-]?\d{2}[\s.-]?\d{2}\b/g;
+
+/**
+ * Escape `text`, turning phone numbers into `tel:` links on the way — several
+ * of these pins say "confirm by phone before going", and on a phone that should
+ * be one tap. Splitting first keeps the escaper from mangling the anchors (and
+ * keeps the matcher away from the digits inside entities like `&#39;`).
+ */
+function linkifyPhones(text: string): string {
+  let out = "";
+  let last = 0;
+  for (const m of text.matchAll(PHONE_RE)) {
+    const start = m.index ?? 0;
+    out += escapeHtml(text.slice(last, start));
+    const digits = m[0].replace(/[^\d+]/g, "");
+    out += `<a class="mc-pop-tel" href="tel:${digits}">${escapeHtml(m[0])}</a>`;
+    last = start + m[0].length;
+  }
+  return out + escapeHtml(text.slice(last));
+}
+
+/**
+ * Popup for one or more reference pins. Several sit at identical coordinates on
+ * purpose — a collapsed building is both a danger zone and a rescue front — so
+ * the popup renders every pin under the cursor instead of whichever one happens
+ * to be drawn on top.
+ */
+function verifiedPopupHtml(features: Record<string, string>[]): string {
+  return features
+    .map((p) => {
+      const capa = isCapa(p.layer) ? p.layer : null;
+      const label = capa ? CAPA_LABELS[capa] : p.layer;
+      const estado = p.estado ? ` · ${p.estado.toUpperCase()}` : "";
+      const approx = p.approx
+        ? `<div class="mc-pop-approx">Ubicación aproximada — confirme antes de desplazarse.</div>`
+        : "";
+      const source = p.source
+        ? `<div class="mc-pop-loc">Fuente: ${escapeHtml(p.source)}</div>`
+        : "";
+      return `
+        <div class="mc-pop-item">
+          <div class="mc-pop-title">
+            <span class="mc-pop-chip">
+              <span class="mc-pop-dot" style="background:${p.color}"></span>${escapeHtml(label)}
+            </span>
+            <span class="mc-pop-sev">${escapeHtml(estado)}</span>
+          </div>
+          <div class="mc-pop-body">
+            <strong>${escapeHtml(`${p.emoji} ${p.title}`.trim())}</strong>
+            ${p.body ? `<br />${linkifyPhones(p.body)}` : ""}
+          </div>
+          ${approx}
+          ${source}
+        </div>`;
+    })
+    .join("");
+}
+
+function isCapa(value: string): value is CapaVerificada {
+  return (CAPAS_VERIFICADAS as readonly string[]).includes(value);
+}
+
 /** A named place the map can jump to: the epicenter, or a shared city view. */
 export type MapView = {
   label: string;
@@ -166,6 +284,9 @@ export function ReportMap({
     view ?? { label: "Zona afectada", ...ZONA_AFECTADA },
   );
   const [active, setActive] = useState<Set<Category>>(new Set(CATEGORIES));
+  const [capas, setCapas] = useState<Set<CapaVerificada>>(
+    new Set(CAPAS_VERIFICADAS),
+  );
   const [reports, setReports] = useState<PublicReport[]>(initialReports);
   // Prompt for the visitor's location as soon as the map loads.
   const { coords: userCoords } = useGeolocation();
@@ -177,6 +298,14 @@ export function ReportMap({
   // Keep latest data reachable from the one-time `load` handler.
   const dataRef = useRef(data);
   dataRef.current = data;
+
+  // Mapbox filter for the reference layers: only the checked capas.
+  const capaFilter = useMemo<FilterSpecification>(
+    () => ["in", ["get", "layer"], ["literal", [...capas]]],
+    [capas],
+  );
+  const capaFilterRef = useRef(capaFilter);
+  capaFilterRef.current = capaFilter;
 
   // Per-category counts for the legend (independent of the active filter).
   const counts = useMemo(() => {
@@ -192,6 +321,15 @@ export function ReportMap({
   const placed = useMemo(
     () => reports.filter((r) => r.lat != null && r.lng != null).length,
     [reports],
+  );
+
+  const verifiedShown = useMemo(
+    () =>
+      CAPAS_VERIFICADAS.reduce(
+        (n, capa) => (capas.has(capa) ? n + VERIFIED_COUNTS[capa] : n),
+        0,
+      ),
+    [capas],
   );
 
   // Initialize the map once, wiring the clustered source + layers on load.
@@ -342,8 +480,104 @@ export function ReportMap({
         },
       });
 
+      // Reference layer — the curated My Maps pins, inserted directly beneath
+      // `points`. Live report dots still win the top of the stack, but the
+      // cluster bubbles under them are neutral chrome, and chrome must not sit
+      // on top of a "no se acerque" pin. Never clustered either: an acopio point
+      // folded into a bubble is a point you can't act on.
+      const ratio = Math.max(2, Math.round(window.devicePixelRatio || 1));
+      for (const color of VERIFIED_COLORS) {
+        const id = verificadoIconId(color);
+        if (map.hasImage(id)) continue;
+        const image = squareIcon(color, ratio);
+        if (image) map.addImage(id, image, { pixelRatio: ratio });
+      }
+
+      map.addSource(VERIFIED_SOURCE_ID, {
+        type: "geojson",
+        data: VERIFIED_DATA,
+      });
+
+      // Corridors the curators trace as lines (the layer's instructions call for
+      // drawing cleared roads); the snapshot is all points until they do.
+      map.addLayer(
+        {
+          id: VERIFIED_LINES_LAYER,
+          type: "line",
+          source: VERIFIED_SOURCE_ID,
+          filter: [
+            "all",
+            ["==", ["geometry-type"], "LineString"],
+            capaFilterRef.current,
+          ],
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: {
+            "line-color": ["get", "color"],
+            "line-width": ["interpolate", ["linear"], ["zoom"], 7, 2, 14, 5],
+            "line-opacity": 0.85,
+          },
+        },
+        "points",
+      );
+
+      map.addLayer(
+        {
+          id: VERIFIED_POINTS_LAYER,
+          type: "symbol",
+          source: VERIFIED_SOURCE_ID,
+          filter: [
+            "all",
+            ["==", ["geometry-type"], "Point"],
+            capaFilterRef.current,
+          ],
+          layout: {
+            "icon-image": ["get", "icon"],
+            // Coincident pins are meaningful here — a collapsed building is both
+            // a danger zone and a rescue front — so let them stack rather than
+            // have collision detection silently drop one.
+            "icon-allow-overlap": true,
+            "icon-size": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              6,
+              0.7,
+              12,
+              1,
+              16,
+              1.25,
+            ],
+            // Labels from city-permalink zoom up (the tightest city view opens
+            // at 12); collision detection thins them out when they'd collide.
+            "text-field": ["step", ["zoom"], "", 12, ["get", "short"]],
+            "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+            "text-size": 10,
+            "text-offset": [0, 1],
+            "text-anchor": "top",
+            "text-max-width": 9,
+            "text-optional": true,
+          },
+          paint: {
+            "text-color": "#e8e8e8",
+            "text-halo-color": "rgba(0,0,0,0.8)",
+            "text-halo-width": 1.2,
+          },
+        },
+        "points",
+      );
+
       // Click a cluster → zoom to its expansion level.
       map.on("click", "clusters", (e) => {
+        // Mapbox fires every layer's handler under the cursor, so a reference
+        // pin sitting on a cluster would both open its popup and zoom away from
+        // it. Whatever is drawn on top wins the click.
+        if (
+          map.queryRenderedFeatures(e.point, {
+            layers: [VERIFIED_POINTS_LAYER],
+          }).length
+        ) {
+          return;
+        }
         const f = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
         const clusterId = f[0]?.properties?.cluster_id;
         const src = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource;
@@ -370,7 +604,32 @@ export function ReportMap({
           .addTo(map);
       });
 
-      for (const layer of ["clusters", "points"]) {
+      // Click a reference pin → popup covering every pin stacked under it.
+      map.on("click", VERIFIED_POINTS_LAYER, (e) => {
+        const hits = map.queryRenderedFeatures(e.point, {
+          layers: [VERIFIED_POINTS_LAYER],
+        });
+        const seen = new Set<string>();
+        const props: Record<string, string>[] = [];
+        for (const f of hits) {
+          const p = f.properties as Record<string, string> | null;
+          if (!p || seen.has(p.id)) continue;
+          seen.add(p.id);
+          props.push(p);
+        }
+        if (!props.length) return;
+        const geom = hits[0].geometry as Point;
+        new mapboxgl.Popup({
+          offset: 12,
+          closeButton: true,
+          maxWidth: "270px",
+        })
+          .setLngLat(geom.coordinates as [number, number])
+          .setHTML(verifiedPopupHtml(props))
+          .addTo(map);
+      });
+
+      for (const layer of ["clusters", "points", VERIFIED_POINTS_LAYER]) {
         map.on("mouseenter", layer, () => {
           map.getCanvas().style.cursor = "pointer";
         });
@@ -397,6 +656,22 @@ export function ReportMap({
     const src = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource | undefined;
     src?.setData(data);
   }, [data]);
+
+  // Show/hide reference capas as they're toggled in the legend.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loadedRef.current) return;
+    map.setFilter(VERIFIED_POINTS_LAYER, [
+      "all",
+      ["==", ["geometry-type"], "Point"],
+      capaFilter,
+    ]);
+    map.setFilter(VERIFIED_LINES_LAYER, [
+      "all",
+      ["==", ["geometry-type"], "LineString"],
+      capaFilter,
+    ]);
+  }, [capaFilter]);
 
   // Live updates: append newly published reports as they happen.
   useEffect(() => {
@@ -468,6 +743,15 @@ export function ReportMap({
     });
   }
 
+  function toggleCapa(capa: CapaVerificada) {
+    setCapas((prev) => {
+      const next = new Set(prev);
+      if (next.has(capa)) next.delete(capa);
+      else next.add(capa);
+      return next;
+    });
+  }
+
   // On a city permalink this returns to that city; otherwise, to the epicenter.
   const quickView: MapView = view ?? { ...EPICENTRO, label: "Epicentro" };
   const focusQuickView = useCallback(() => {
@@ -491,10 +775,10 @@ export function ReportMap({
       <div ref={containerRef} className="h-full w-full" />
 
       {/* Legend / category filter */}
-      <div className="absolute left-3 top-3 z-10 w-[212px] border border-border bg-card/95 backdrop-blur">
+      <div className="absolute left-3 top-3 z-10 flex max-h-[calc(100%-1.5rem)] w-[212px] flex-col overflow-y-auto border border-border bg-card/95 backdrop-blur">
         <div className="flex items-center justify-between border-b border-border px-3 py-2">
           <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-            Capas
+            Reportes
           </span>
           <span className="font-mono text-[10px] text-muted-foreground">
             {data.features.length}/{placed}
@@ -514,8 +798,9 @@ export function ReportMap({
                   on ? "text-foreground" : "text-muted-foreground",
                 )}
               >
+                {/* Round, like the report dots on the map. */}
                 <span
-                  className="size-2.5 shrink-0 border border-black/10"
+                  className="size-2.5 shrink-0 rounded-full border border-black/10"
                   style={{
                     backgroundColor: meta.color,
                     opacity: on ? 1 : 0.25,
@@ -529,6 +814,57 @@ export function ReportMap({
             );
           })}
         </div>
+
+        {/* Reference layer — curated pins from the citizen My Maps. Square
+            swatches here because they're square markers on the map. */}
+        <div className="flex items-center justify-between border-y border-border px-3 py-2">
+          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+            Mapa verificado
+          </span>
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {verifiedShown}/{VERIFIED_TOTAL}
+          </span>
+        </div>
+        <div className="flex flex-col">
+          {CAPAS_VERIFICADAS.map((capa) => {
+            const on = capas.has(capa);
+            return (
+              <button
+                key={capa}
+                type="button"
+                onClick={() => toggleCapa(capa)}
+                className={cn(
+                  "flex items-center gap-2.5 px-3 py-1.5 text-left text-[12px] transition-colors hover:bg-accent",
+                  on ? "text-foreground" : "text-muted-foreground",
+                )}
+              >
+                <span
+                  className="size-2.5 shrink-0 border border-black/10"
+                  style={{
+                    backgroundColor: CAPA_META[capa].color,
+                    opacity: on ? 1 : 0.25,
+                  }}
+                />
+                <span className="flex-1">{CAPA_LABELS[capa]}</span>
+                <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+                  {VERIFIED_COUNTS[capa]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="border-t border-border px-3 py-2 text-[10px] leading-snug text-muted-foreground">
+          Curado a mano desde{" "}
+          <a
+            href={MAPA_VERIFICADO_URL}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="underline underline-offset-2 hover:text-foreground"
+          >
+            {MAPA_VERIFICADO_NOMBRE}
+          </a>
+          . No es fuente oficial: emergencias, 123.
+        </p>
         {/* Quick views */}
         <div className="grid grid-cols-2 gap-px border-t border-border bg-border">
           <button
