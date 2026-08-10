@@ -11,7 +11,9 @@ import {
   MAPA_VERIFICADO_NOMBRE,
   MAPA_VERIFICADO_SYNC,
   MAPA_VERIFICADO_URL,
+  PUNTOS_VERIFICADOS,
 } from "@/lib/mapa-verificado";
+import { DONACION_EN_DINERO } from "@/lib/mapa-verificado.local";
 
 export const metadata = { title: "Acerca · Reporte CO" };
 
@@ -20,6 +22,10 @@ const VERIFICADO_TOTAL = Object.values(VERIFICADO_COUNTS).reduce(
   (a, b) => a + b,
   0,
 );
+const VERIFICADO_OFICIAL = PUNTOS_VERIFICADOS.filter(
+  (p) => p.origen === "oficial",
+).length;
+const VERIFICADO_MYMAPS = VERIFICADO_TOTAL - VERIFICADO_OFICIAL;
 const VERIFICADO_FECHA = new Intl.DateTimeFormat("es-CO", {
   dateStyle: "long",
   timeStyle: "short",
@@ -148,7 +154,8 @@ export default function AcercaPage() {
           <SectionLabel>El mapa verificado</SectionLabel>
           <p className="text-[14px] leading-relaxed text-foreground/90">
             Sobre los reportes ciudadanos el mapa dibuja una segunda capa de{" "}
-            {VERIFICADO_TOTAL} puntos curados a mano por voluntarios en{" "}
+            {VERIFICADO_TOTAL} puntos curados a mano: {VERIFICADO_MYMAPS}{" "}
+            transcritos por voluntarios en{" "}
             <a
               className="text-foreground underline underline-offset-4 hover:opacity-80"
               href={MAPA_VERIFICADO_URL}
@@ -156,11 +163,13 @@ export default function AcercaPage() {
               rel="noreferrer noopener"
             >
               {MAPA_VERIFICADO_NOMBRE}
-            </a>
-            , a partir de boletines oficiales y medios establecidos. Se dibujan
-            como cuadrados, no como círculos: un círculo es alguien reportando,
-            un cuadrado es información copiada de una fuente citada. Cada ficha
-            indica su fuente y advierte cuando la ubicación es aproximada.
+            </a>{" "}
+            desde boletines oficiales y medios establecidos, y{" "}
+            {VERIFICADO_OFICIAL} publicados directamente por una autoridad. Se
+            dibujan como cuadrados, no como círculos: un círculo es alguien
+            reportando, un cuadrado es información copiada de una fuente citada.
+            Cada ficha indica su fuente y advierte cuando la ubicación es
+            aproximada.
           </p>
           <ul className="divide-y divide-border border border-border bg-card">
             {CAPAS_VERIFICADAS.map((capa) => (
@@ -176,10 +185,49 @@ export default function AcercaPage() {
             ))}
           </ul>
           <p className="text-[12px] leading-relaxed text-muted-foreground">
-            No es una fuente oficial. Emergencias: 123 · desastres 111 ·
+            El mapa ciudadano no es una fuente oficial; los puntos marcados{" "}
+            <span className="text-foreground">Oficial</span> sí provienen
+            directamente de una autoridad. Emergencias: 123 · desastres 111 ·
             ambulancias 125 · Cruz Roja 132 · Defensa Civil 144. Instantánea
             tomada el {VERIFICADO_FECHA}; la situación cambia con cada réplica,
             así que un punto puede estar desactualizado.
+          </p>
+        </section>
+
+        <div className="my-10 h-px bg-border" />
+
+        <section className="space-y-4">
+          <SectionLabel>Donaciones en dinero</SectionLabel>
+          <p className="text-[14px] leading-relaxed text-foreground/90">
+            La campaña «Bogotá se solidariza ante el sismo» también recibe
+            aportes en dinero. No lleva marcador en el mapa porque no es un
+            lugar al que se pueda llegar; los puntos de acopio físicos sí están,
+            marcados en verde sobre Bogotá.
+          </p>
+          <dl className="divide-y divide-border border border-border bg-card">
+            {[
+              ["Titular", DONACION_EN_DINERO.titular],
+              ["Banco", DONACION_EN_DINERO.banco],
+              [
+                "Cuenta",
+                `${DONACION_EN_DINERO.cuenta} · ${DONACION_EN_DINERO.tipo}`,
+              ],
+            ].map(([k, v]) => (
+              <div
+                key={k}
+                className="flex items-baseline justify-between gap-4 px-3 py-2.5"
+              >
+                <dt className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                  {k}
+                </dt>
+                <dd className="text-right text-[13px]">{v}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="text-[12px] leading-relaxed text-muted-foreground">
+            Transcrito de la pieza publicada por {DONACION_EN_DINERO.fuente}.
+            Confirme los datos contra el canal oficial de la Cruz Roja antes de
+            transferir: nosotros no recibimos ni intermediamos donaciones.
           </p>
         </section>
 
