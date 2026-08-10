@@ -4,8 +4,27 @@ import { GithubBadge } from "@/components/github-badge";
 import { QrShare } from "@/components/qr-share";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
+import {
+  CAPA_LABELS,
+  CAPAS_VERIFICADAS,
+  capaCounts,
+  MAPA_VERIFICADO_NOMBRE,
+  MAPA_VERIFICADO_SYNC,
+  MAPA_VERIFICADO_URL,
+} from "@/lib/mapa-verificado";
 
 export const metadata = { title: "Acerca · Reporte CO" };
+
+const VERIFICADO_COUNTS = capaCounts();
+const VERIFICADO_TOTAL = Object.values(VERIFICADO_COUNTS).reduce(
+  (a, b) => a + b,
+  0,
+);
+const VERIFICADO_FECHA = new Intl.DateTimeFormat("es-CO", {
+  dateStyle: "long",
+  timeStyle: "short",
+  timeZone: "America/Bogota",
+}).format(new Date(MAPA_VERIFICADO_SYNC));
 
 const PIPELINE = [
   "Ingreso",
@@ -121,6 +140,47 @@ export default function AcercaPage() {
               </div>
             ))}
           </div>
+        </section>
+
+        <div className="my-10 h-px bg-border" />
+
+        <section className="space-y-4">
+          <SectionLabel>El mapa verificado</SectionLabel>
+          <p className="text-[14px] leading-relaxed text-foreground/90">
+            Sobre los reportes ciudadanos el mapa dibuja una segunda capa de{" "}
+            {VERIFICADO_TOTAL} puntos curados a mano por voluntarios en{" "}
+            <a
+              className="text-foreground underline underline-offset-4 hover:opacity-80"
+              href={MAPA_VERIFICADO_URL}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              {MAPA_VERIFICADO_NOMBRE}
+            </a>
+            , a partir de boletines oficiales y medios establecidos. Se dibujan
+            como cuadrados, no como círculos: un círculo es alguien reportando,
+            un cuadrado es información copiada de una fuente citada. Cada ficha
+            indica su fuente y advierte cuando la ubicación es aproximada.
+          </p>
+          <ul className="divide-y divide-border border border-border bg-card">
+            {CAPAS_VERIFICADAS.map((capa) => (
+              <li
+                key={capa}
+                className="flex items-baseline justify-between gap-4 px-3 py-2.5"
+              >
+                <span className="text-[13px]">{CAPA_LABELS[capa]}</span>
+                <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+                  {VERIFICADO_COUNTS[capa]}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[12px] leading-relaxed text-muted-foreground">
+            No es una fuente oficial. Emergencias: 123 · desastres 111 ·
+            ambulancias 125 · Cruz Roja 132 · Defensa Civil 144. Instantánea
+            tomada el {VERIFICADO_FECHA}; la situación cambia con cada réplica,
+            así que un punto puede estar desactualizado.
+          </p>
         </section>
 
         <div className="my-10 h-px bg-border" />
