@@ -298,3 +298,25 @@ a,
   border: 1px solid var(--border);
   display: block;
 }
+
+/* Reference-layer popups: one block per pin stacked under the cursor. */
+.mc-pop-item + .mc-pop-item {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.mc-pop-item .mc-pop-body {
+  max-width: 240px;
+}
+.mc-pop-approx {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #fbbf24;
+}
+.mc-pop-tel {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
