@@ -42,6 +42,28 @@ export async function getPublicReports(
     .limit(1000);
 }
 
+/**
+ * Cheap published-report tallies for the OG cards, which only need two
+ * numbers and must not pull a thousand rows on every crawler hit.
+ */
+export async function getPublicCounts(
+  departamento?: string,
+): Promise<{ total: number; critical: number }> {
+  const [row] = await db
+    .select({
+      total: sql<number>`count(*)::int`,
+      critical: sql<number>`(count(*) filter (where ${reports.severity} = 'critical'))::int`,
+    })
+    .from(reports)
+    .where(
+      and(
+        eq(reports.status, "published"),
+        departamento ? eq(reports.departamento, departamento) : undefined,
+      ),
+    );
+  return row ?? { total: 0, critical: 0 };
+}
+
 /** Moderation queue — newest unprocessed reports first. Internal surface. */
 export async function getQueue(
   status: Report["status"] = "pending",
